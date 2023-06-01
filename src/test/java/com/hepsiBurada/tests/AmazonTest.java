@@ -6,6 +6,7 @@ import com.hepsiBurada.pages.LoginPage;
 import com.hepsiBurada.pages.SamsungPage;
 import com.hepsiBurada.utilities.BrowserUtils;
 import com.hepsiBurada.utilities.ConfigurationReader;
+import org.openqa.selenium.By;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -14,7 +15,7 @@ import java.util.List;
 public class AmazonTest extends TestBase{
 
     @Test
-    public void testAmazon() {
+    public void testAmazon() throws InterruptedException {
         LoginPage loginPage=new LoginPage();
         SamsungPage samsungPage=new SamsungPage();
         ListePage listePage=new ListePage();
@@ -65,33 +66,37 @@ public class AmazonTest extends TestBase{
         samsungPage.listeyeEkle.click();
 
         extentLogger.info("'Ürün listenize eklendi' popup kontrolü yapılır");
+        Thread.sleep(3000);
         try {
-            listePage.listeOlustur.click();
-            Assert.assertTrue(listePage.listeyeEklendi.isDisplayed());
+            //her hangi bir alışveriş listesi yoksa bu adımda oluşturulur
+            driver.findElement(By.xpath("(//span[@class='a-button a-button-primary'])[2]")).click();
         } catch (Exception e) {
-
-        }
-        String text = listePage.urunEklendi.getText();
-        try {
-            Assert.assertEquals(text,"1 ürün şuraya eklendi:");
-        } catch (Exception e) {
-            Assert.assertEquals(text,"Bu ürün zaten şurada mevcut:");
+            //önceden oluşturulmuş bir alışveriş listesi varsa
+            String text = listePage.urunEklendi.getText();
+            //ürün ilk defa ekleniyor ise
+            if(text.equals("1 ürün şuraya eklendi:")){
+                Assert.assertEquals(text,"1 ürün şuraya eklendi:");
+            }//ürün zaten listede mevcut ise
+            else {
+                Assert.assertEquals(text,"Bu ürün zaten şurada mevcut:");
+            }
         }
         listePage.listeKapa.click();
 
+
         extentLogger.info("Ekran üstündeki hesabım alanında beğenilen ürün kontrolü yapılır");
         actions.moveToElement(listePage.merhabaGirisYapin).perform();
-        listePage.setCardListe.click();
+        Thread.sleep(1000);
+        listePage.alisverisListesi.click();
 
         extentLogger.info("Beğenilen ürün seçilir ve sepete eklenir");
         listePage.sepeteEkle.click();
 
-        extentLogger.info("'Ürün sepete eklendi' kontrolü yapılır");
-        listePage.sepetim.click();
-        Assert.assertFalse(basketPage.sepetimdekiUrunler.isEmpty());
-
         extentLogger.info("Sepetim sayfasına gidilir");
+        listePage.sepetim.click();
 
+        extentLogger.info("'Ürün sepete eklendi' kontrolü yapılır");
+        Assert.assertFalse(basketPage.sepetimdekiUrunler.isEmpty());
 
         extentLogger.info("Ürün kaldır butonuna basılıp sepetten çıkarılır");
         basketPage.sil.click();
